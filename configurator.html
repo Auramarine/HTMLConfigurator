@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"> 
+		<script src="jquery-1.9.1.min.js" type="text/javascript"></script>
+		<script src="jquery-ui.js" type="text/javascript"></script>
+		<script src="jQueryRotateCompressed.2.2.js" type="text/javascript"></script>
+		<img src="Logo.bmp" alt="Logo" width="253" height="60">
+		<style>
+			.box_configurator{
+				width: 400px;
+				height: 60px;
+				border: solid thin black;
+				position: absolute;
+				cursor: pointer;
+				-webkit-border-radius: 10px;
+				-moz-border-radius: 10px;
+				border-radius: 10px;
+				-webkit-box-shadow:  3px 3px 2px 2px rgba(1, 1, 1, .3);
+				box-shadow:  3px 3px 2px 2px rgba(1, 1, 1, .3);
+				text-align: center;
+				font-weight: bold;
+				color: black;
+				padding-top: 5px;
+				font-family: Verdana;
+			}
+			.box_question{
+				background-color: lightgreen;
+			}
+			.box_answer{
+				background-color: yellow;
+			}
+			.kennykee-styles{
+				font-size: 40px; 
+				font-family: Arial; 
+				margin: 10px; 
+				font-weight:bold;
+			}
+		</style>
+		
+	</head>
+	<body>
+		<div>
+			<input type="file" id="myFile" multiple size="50" style="width:125px;height:80px;border:1px solid #000;">
+			<input type="button" value="Open Source" id="open_Source" onclick="openSource()" style="width:125px;height:80px;border:1px solid #000;">
+			<input type="button" value="Load example" id="load_example" onclick="loadExample()" style="width:125px;height:80px;border:1px solid #000;">
+			
+			<asp:Panel ID="Panel1" runat="server" >
+				<!-- div to be created here -->
+			</asp:Panel>
+		</div>
+
+		<script src="XMLWriter.js"></script>
+		<script src="read_write_xml.js"></script>
+		<script type="text/javascript">
+		
+			//save the last y
+			var previous_y = 160;
+			var source_content;
+
+			// Opera 8.0+
+			var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+			// Firefox 1.0+
+			var isFirefox = typeof InstallTrigger !== 'undefined';
+			// Safari 3.0+ "[object HTMLElementConstructor]" 
+			var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+			// Internet Explorer 6-11
+			var isIE = /*@cc_on!@*/false || !!document.documentMode;
+			// Edge 20+
+			var isEdge = !isIE && !!window.StyleMedia;
+			// Chrome 1+
+			var isChrome = !!window.chrome && !!window.chrome.webstore;
+			// Blink engine detection
+			var isBlink = (isChrome || isOpera) && !!window.CSS;
+			
+			if (isFirefox === true || isChrome === true) {
+				isFirefox = true;
+				var xhttp = new XMLHttpRequest();
+			} else {
+				var xmlDocMS = new ActiveXObject("Microsoft.XMLDOM");
+			}
+			
+			//add an event listener to upload file
+			document.getElementById('myFile').addEventListener('change', readSingleFile, false);
+						
+			/*
+			* on document load, do nothing
+			*/
+			$(document).ready(function(){
+				
+			});
+			
+			/**
+			 * Example is loaded by reading xml file where browser matters
+			 */
+			function loadExample() {
+				//clear everything
+				previous_y = 160;
+				//delete everything
+				var i;
+				//search the box in question, the search result is also used in the next for loop
+				for (i = 0; i < boxes.length; i++) {
+					//delete
+					console.log("Delete box " + boxes[i].getid + " boxes.length " + boxes.length);
+					$("#" + boxes[i].getid).remove();
+					
+					//delete also the lines if gotos exist
+					if (boxes[i].getgoto1) {
+						$("#line" + boxes[i].getgoto1).remove();
+					}
+					if (boxes[i].getgoto2) {
+						$("#line" + boxes[i].getgoto2).remove();
+					}
+					//if the last instance, delete also the line that goes to it
+					if ($("#line" + boxes[i].getid)) {
+						$("#line" + boxes[i].getid).remove();
+					}
+				}
+				
+				//delete the array
+				boxes = [];
+				
+				//read new XML and null the source_content
+				source_content = null;
+				var source_fileName = "example.xml";
+								
+				if (isFirefox === true) {
+					xhttp.onreadystatechange = function() {
+						if (this.readyState == 4 && this.status == 200) { //this is now set for firefox...
+							source_content = readXML(this, true);
+							setBoxes();
+						}
+					};
+					xhttp.open("GET", source_fileName, true);
+					xhttp.send();
+				} else {
+					//Always on load read the source by initilizing XML read
+					xmlDocMS.async="false"; 
+					xmlDocMS.onreadystatechange=verify; 
+					//xmlDocMS.load("source.xml"); 
+					xmlDocMS.load(source_fileName);
+					xmlObj=xmlDocMS.documentElement; 
+					source_content = readXML(xmlDocMS, false);
+					setBoxes();
+				}
+			}
+			
+			/**
+			 * If user uploads a file, read the uploaded file and use that as a template to XML
+			 */
+			function readSingleFile(evt) {
+				
+				//Retrieve the first (and only!) File from the FileList object
+				var f = evt.target.files[0]; 
+				var fname = "";
+				var x = document.getElementById("myFile");
+
+				if (f) {
+					fname = x.files[0].name;
+					
+					//check that an xml file
+					if (fname.split(".")[fname.split(".").length - 1] !== "xml") {
+						alert("Not an XML file");
+						return;
+					}
+					
+					//clear everything
+					previous_y = 160;
+					//delete everything
+					var i;
+					//search the box in question, the search result is also used in the next for loop
+					for (i = 0; i < boxes.length; i++) {
+						//delete
+						console.log("Delete box " + boxes[i].getid + " boxes.length " + boxes.length);
+						$("#" + boxes[i].getid).remove();
+						
+						//delete also the lines if gotos exist
+						if (boxes[i].getgoto1) {
+							$("#line" + boxes[i].getgoto1).remove();
+						}
+						if (boxes[i].getgoto2) {
+							$("#line" + boxes[i].getgoto2).remove();
+						}
+						//if the last instance, delete also the line that goes to it
+						if ($("#line" + boxes[i].getid)) {
+							$("#line" + boxes[i].getid).remove();
+						}
+					}
+					
+					//delete the array
+					boxes = [];
+					
+					console.log("Selected: " + fname);
+					
+					//Read the file as text
+					var r = new FileReader();
+					r.onload = function(e) { 
+						var contents = e.target.result;
+						
+						readXML(null, null, contents);
+						
+						//save contents to global var to pass to source.html
+						source_content = contents;
+						setBoxes();
+					}
+					
+					r.readAsText(f);
+				} else { 
+					alert("Failed to load file");
+				}
+			}
+			
+			/**
+			 * Open the configure xml html
+			 */
+			function openSource() {
+				//first delete the cookie if set
+				delete_cookie("source_content_text");
+				
+				//if source contents lenght is more than cookie allowed do not save it
+				if (source_content.length < 4000) {
+					//set up the cookie with read XML
+					setCookie("source_content_text", source_content, 30);
+				} else {
+					setCookie("source_content_text", "blank", 30);
+				}
+				//Navigate to configure html
+				window.location.href = 'source.html';
+			}
+			
+			/**
+			 * If cookie exists delete it
+			 */
+			function delete_cookie( name ) {
+				document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+			}
+						
+			/**
+			 * Set the wanted cookie with no linebreaks
+			 */
+			function setCookie(cname,cvalue,exdays) {
+				var d = new Date();
+				d.setTime(d.getTime() + (exdays*24*60*60*1000));
+				var expires = "expires=" + d.toGMTString();
+				document.cookie = cname + "=" + cvalue.replace(/(?:\r\n|\r|\n)/g, '') + ";" + expires + ";path=/";
+			}
+
+			/**
+			 * Get the cookie here, just for the sake of it, used in source.html
+			 */
+			function getCookie(cname) {
+				var name = cname + "=";
+				var decodedCookie = decodeURIComponent(document.cookie);
+				var ca = decodedCookie.split(';');
+				for(var i = 0; i < ca.length; i++) {
+					var c = ca[i];
+					while (c.charAt(0) == ' ') {
+						c = c.substring(1);
+					}
+					if (c.indexOf(name) == 0) {
+						return c.substring(name.length, c.length);
+					}
+				}
+				return "";
+			}
+			
+			/**
+			 * Search the box that has no gotos set, that is the first box
+			 */
+			function setBoxes() {
+				//get the values from the loaded question list, it is the one that contains no one contains as goto
+				var i;
+				for (i = 0; i < boxes.length; i++) {
+					var found = false;
+				
+					var j;
+					for (j = 0; j<boxes.length; j++) {
+						if (i === j) {
+							continue;
+						}
+						
+						//the i id does not match j goto1 or goto2
+						if (boxes[i].getid !== boxes[j].getgoto1 && boxes[i].getid !== boxes[j].getgoto2) {
+							found = true;
+							break;
+						}
+					}
+					//if not found continue the search
+					if (found === false) {
+						continue;
+					}
+					
+					//we found the hit, use that	
+					addButton(boxes[i].getid);
+					break;
+				}
+			}
+			
+			/**
+			 * Add a box to html page with or without buttons
+			 */
+			function addButton(box_id) {				
+				//seek the box in question
+				var i;
+				var box;
+				for (i = 0; i<boxes.length; i++) {
+					if (box_id === boxes[i].getid) {
+						box = boxes[i];
+						break;
+					}
+				}
+				
+				var pnl = document.getElementById("<%= Panel1.ClientID %>");
+				var dynDiv = document.createElement("div");
+				dynDiv.id = box.getid;
+				dynDiv.innerHTML = box.getquestion + "<br>";
+				document.body.appendChild(dynDiv);
+									
+				if (box.getbutton1 && box.getbutton2) {
+					document.getElementById(box.getid).className = 'box_question box_configurator';
+					
+					//add the buttons
+					var b1 = document.createElement("input");
+					b1.id = "b1";
+					b1.type = "button"
+					b1.value = box.getbutton1;
+					b1.style.fontSize = "20px";
+					b1.addEventListener('click', function(){ 
+						this.style.backgroundColor = "rgb(" + 100 + "," + 100 + "," + 100 + ")";
+						addButton(box.getgoto1);
+					}); 
+					document.getElementById(box.getid).appendChild(b1);
+					var b1 = document.createElement("input");
+					b1.type = "button"
+					b1.value = box.getbutton2;
+					b1.style.fontSize = "20px";
+					b1.addEventListener('click', function(){ 
+						this.style.backgroundColor = "rgb(" + 100 + "," + 100 + "," + 100 + ")";
+						addButton(box.getgoto2);
+					}); 
+					document.getElementById(box.getid).appendChild(b1);
+				}
+				else {
+					document.getElementById(box.getid).className = 'box_answer box_configurator';
+				}
+				
+				//position the box
+				$("#" + box.getid).queue(function(){
+					$(this).offset({top: previous_y, left: 5});
+					$(this).dequeue();
+					previous_y += 70;
+				});
+			}
+			
+		</script>
+	</body>
+</html>

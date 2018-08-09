@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<boxes>
+  <box>
+    <question>Is it cold?</question>
+    <id>1lg1z</id>
+    <goto1>zUMwa</goto1>
+    <goto2>50A1o</goto2>
+    <button1>No</button1>
+    <button2>Yes</button2>
+    <x>432.5</x>
+    <y>230</y>
+  </box>
+  <box>
+    <question>Great</question>
+    <id>50A1o</id>
+    <goto1>blank</goto1>
+    <goto2>blank</goto2>
+    <button1>blank</button1>
+    <button2>blank</button2>
+    <x>648.75</x>
+    <y>308.75</y>
+  </box>
+  <box>
+    <question>Should it be?</question>
+    <id>zUMwa</id>
+    <goto1>J5zqU</goto1>
+    <goto2>JijEs</goto2>
+    <button1>Yes</button1>
+    <button2>No</button2>
+    <x>658.75</x>
+    <y>170</y>
+  </box>
+  <box>
+    <question>Get a fridge?</question>
+    <id>J5zqU</id>
+    <goto1>blank</goto1>
+    <goto2>blank</goto2>
+    <button1>blank</button1>
+    <button2>blank</button2>
+    <x>880</x>
+    <y>95</y>
+  </box>
+  <box>
+    <question>Get used to it</question>
+    <id>JijEs</id>
+    <goto1>blank</goto1>
+    <goto2>blank</goto2>
+    <button1>blank</button1>
+    <button2>blank</button2>
+    <x>871.25</x>
+    <y>248.75</y>
+  </box>
+</boxes>
